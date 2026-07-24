@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Know Your Numbers — Vital Signs Dashboard</title>
+<script src="https://unpkg.com/lucide@0.456.0/dist/umd/lucide.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root{
+  --sm-green:#A5C05B; --sm-teal:#488A99; --sm-sky:#A1D6E2; --sm-amber:#E1A730;
+  --sm-black:#000000; --sm-paper:#FCFCFA; --sm-critical:#B5533C;
+  --sm-green-50:#F3F6E7; --sm-green-100:#E5EDCC; --sm-green-700:#7E9941; --sm-green-900:#4F6225;
+  --sm-teal-50:#EAF1F3; --sm-teal-100:#C9DDE2; --sm-teal-700:#356773; --sm-teal-900:#1F3D45;
+  --sm-amber-50:#FBF2DF; --sm-critical-50:#F7E9E5;
+  --sm-ink-900:#111111; --sm-ink-700:#2A2A2A; --sm-ink-500:#555555; --sm-ink-400:#7A7A7A;
+  --sm-ink-300:#A9A9A9; --sm-ink-200:#D6D4CE; --sm-ink-100:#ECEAE3; --sm-paper-tint:#F6F4EE;
+  --fg-1:var(--sm-black); --fg-2:var(--sm-ink-500); --fg-3:var(--sm-ink-400);
+  --bg-page:var(--sm-paper); --bg-card:#FFFFFF; --bg-soft:var(--sm-paper-tint);
+  --border-hair:rgba(0,0,0,0.08); --border-soft:rgba(0,0,0,0.14);
+  --font-display:"Libre Baskerville", Georgia, serif;
+  --font-title:"League Spartan", "Helvetica Neue", Arial, sans-serif;
+  --font-body:"Libre Baskerville", Georgia, serif;
+  --font-ui:"League Spartan", system-ui, sans-serif;
+  --r-sm:8px; --r-md:12px; --r-pill:999px;
+  --sh-1:0 1px 2px rgba(0,0,0,0.05), 0 1px 1px rgba(0,0,0,0.04);
+  --sh-2:0 4px 12px rgba(31,61,69,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --ease-out:cubic-bezier(0.22,0.61,0.36,1);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg-page);color:var(--fg-1);font-family:var(--font-body);}
+body{-webkit-font-smoothing:antialiased;}
+.app-shell{display:flex;min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:250px;flex:none;background:var(--bg-card);border-right:1px solid var(--border-hair);
+  padding:28px 20px;position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{font-family:var(--font-title);font-weight:700;font-size:1.05rem;letter-spacing:0.06em;margin-bottom:2px;}
+.brand .accent{color:var(--sm-green-700);}
+.brand-sub{font-family:var(--font-title);font-size:0.65rem;letter-spacing:0.18em;color:var(--fg-3);text-transform:uppercase;margin-bottom:22px;}
+.biz-field{margin-bottom:10px;}
+.biz-field label{display:block;font-family:var(--font-title);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px;}
+.biz-field input{width:100%;font-family:var(--font-body);font-size:0.9rem;padding:7px 9px;border:1px solid var(--border-soft);border-radius:var(--r-sm);background:var(--bg-soft);}
+.nav{list-style:none;padding:0;margin:22px 0 0;}
+.nav li{margin-bottom:2px;}
+.nav button{
+  width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;
+  padding:10px 12px;border-radius:var(--r-sm);font-family:var(--font-title);font-size:0.78rem;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--fg-2);cursor:pointer;
+  transition:background var(--ease-out) 140ms, color var(--ease-out) 140ms;
+}
+.nav button:hover{background:var(--sm-teal-50);color:var(--fg-1);}
+.nav button.active{background:var(--sm-green-100);color:var(--sm-green-900);font-weight:600;}
+.nav button svg{width:16px;height:16px;flex:none;}
+.sidebar-foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--border-hair);}
+.sidebar-foot button{
+  width:100%;font-family:var(--font-title);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;
+  padding:9px 10px;border-radius:var(--r-pill);border:1.5px solid var(--sm-black);background:none;cursor:pointer;
+  margin-bottom:8px;
+}
+.sidebar-foot .primary{background:var(--sm-green);border-color:var(--sm-green);color:var(--sm-black);font-weight:600;}
+.sidebar-foot .primary:hover{background:var(--sm-green-700);color:#fff;}
+.sidebar-foot p{font-size:0.72rem;color:var(--fg-3);line-height:1.5;margin:8px 0 0;}
+
+/* ---------- Main ---------- */
+main{flex:1;padding:40px 44px;max-width:980px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fade 240ms var(--ease-out);}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.eyebrow{font-family:var(--font-title);font-weight:600;font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--sm-teal-700);margin:0 0 6px;}
+h1.page-title{font-family:var(--font-display);font-weight:700;font-size:2rem;margin:0 0 4px;}
+.page-sub{font-family:var(--font-body);color:var(--fg-2);font-size:0.98rem;margin:0 0 28px;max-width:60ch;}
+
+.card{background:var(--bg-card);border:1px solid var(--border-hair);border-radius:var(--r-md);box-shadow:var(--sh-2);padding:26px 28px;margin-bottom:20px;}
+.card h3{font-family:var(--font-title);font-weight:600;font-size:0.95rem;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px;}
+.card .hint{font-size:0.85rem;color:var(--fg-3);margin:0 0 18px;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media (max-width:760px){.grid-2{grid-template-columns:1fr;} main{padding:28px 20px;} .app-shell{flex-direction:column;} .sidebar{width:100%;height:auto;position:relative;}}
+
+.field-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px dashed var(--border-hair);}
+.field-row:last-child{border-bottom:0;}
+.field-row label{font-size:0.88rem;color:var(--fg-2);flex:1;}
+.field-row input, .field-row select{
+  width:140px;text-align:right;font-family:var(--font-body);font-size:0.92rem;padding:6px 9px;
+  border:1px solid var(--border-soft);border-radius:var(--r-sm);background:var(--bg-soft);
+}
+.field-row select{text-align:left;width:180px;}
+.field-row.total label{font-weight:700;color:var(--fg-1);}
+.field-row.total input{background:var(--sm-green-50);font-weight:700;border-color:var(--sm-green-100);}
+.field-row.readout label{font-weight:700;}
+.field-row.readout .value{font-family:var(--font-title);font-weight:700;font-size:1.1rem;width:140px;text-align:right;}
+
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-title);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:var(--r-pill);font-weight:600;}
+.badge svg{width:13px;height:13px;}
+.badge.excellent{background:var(--sm-green-100);color:var(--sm-green-900);}
+.badge.healthy{background:var(--sm-teal-100);color:var(--sm-teal-900);}
+.badge.caution{background:var(--sm-amber-50);color:#8a611c;}
+.badge.critical{background:var(--sm-critical-50);color:var(--sm-critical);}
+.badge.neutral{background:var(--sm-ink-100);color:var(--fg-3);}
+
+.interp{font-family:var(--font-body);font-style:italic;color:var(--fg-2);font-size:0.92rem;margin-top:10px;}
+.action-line{display:flex;gap:8px;align-items:flex-start;font-size:0.88rem;color:var(--fg-1);margin-top:6px;background:var(--bg-soft);padding:10px 12px;border-radius:var(--r-sm);border-left:2px solid var(--sm-green);}
+.action-line svg{width:15px;height:15px;flex:none;margin-top:2px;color:var(--sm-teal-700);}
+
+/* Dashboard vital sign rows */
+.vital-row{display:grid;grid-template-columns:1.6fr 1fr 1.3fr 1.2fr;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-hair);}
+.vital-row:last-child{border-bottom:0;}
+.vital-row .name{font-family:var(--font-title);font-weight:600;font-size:0.85rem;letter-spacing:0.02em;}
+.vital-row .num{font-family:var(--font-display);font-weight:700;font-size:1.3rem;}
+.vital-row .target{font-size:0.78rem;color:var(--fg-3);}
+.vital-head{display:grid;grid-template-columns:1.6fr 1fr 1.3fr 1.2fr;gap:14px;padding:0 0 8px;border-bottom:2px solid var(--sm-black);font-family:var(--font-title);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-3);}
+
+.score-banner{display:flex;align-items:center;justify-content:space-between;background:var(--sm-teal-50);border-radius:var(--r-md);padding:18px 24px;margin:22px 0;}
+.score-banner .label{font-family:var(--font-title);font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--sm-teal-900);}
+.score-banner .score{font-family:var(--font-display);font-weight:700;font-size:1.6rem;}
+
+table.history{width:100%;border-collapse:collapse;font-size:0.88rem;}
+table.history th{font-family:var(--font-title);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);text-align:left;padding:8px 10px;border-bottom:2px solid var(--sm-black);}
+table.history td{padding:9px 10px;border-bottom:1px solid var(--border-hair);}
+table.history tr:last-child td{border-bottom:0;}
+.btn{font-family:var(--font-title);font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px;border-radius:var(--r-pill);border:0;cursor:pointer;background:var(--sm-green);color:var(--sm-black);font-weight:600;transition:background 140ms var(--ease-out);}
+.btn:hover{background:var(--sm-green-700);color:#fff;}
+.btn.secondary{background:none;border:1.5px solid var(--sm-black);}
+.btn.secondary:hover{background:var(--bg-soft);}
+.btn.small{padding:6px 14px;font-size:0.68rem;}
+.empty-state{color:var(--fg-3);font-style:italic;padding:20px 0;font-size:0.9rem;}
+.section-note{background:var(--sm-sky);background:rgba(161,214,226,0.28);border-radius:var(--r-md);padding:14px 18px;font-size:0.86rem;color:var(--sm-teal-900);margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">SUCCESS <span class="accent">METRICS</span></div>
+    <div class="brand-sub">Know Your Numbers</div>
+
+    <div class="biz-field">
+      <label>Business name</label>
+      <input type="text" id="bizName" placeholder="Your business name" />
+    </div>
+    <div class="biz-field">
+      <label>Month</label>
+      <input type="month" id="bizMonth" />
+    </div>
+
+    <ul class="nav" id="navList">
+      <li><button data-tab="dashboard" class="active"><i data-lucide="layout-dashboard"></i>Dashboard</button></li>
+      <li><button data-tab="cash"><i data-lucide="wallet"></i>Cash</button></li>
+      <li><button data-tab="margin"><i data-lucide="percent"></i>Margin &amp; pricing</button></li>
+      <li><button data-tab="breakeven"><i data-lucide="scale"></i>Break-even</button></li>
+      <li><button data-tab="marketing"><i data-lucide="users"></i>Marketing</button></li>
+      <li><button data-tab="history"><i data-lucide="history"></i>History</button></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <button class="primary" id="saveMonthBtn">Save this month</button>
+      <button class="secondary" id="printBtn">Print / save PDF</button>
+      <p>Your numbers are saved in this browser only, on this device. Nothing is sent anywhere.</p>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="tab-panel active" id="tab-dashboard">
+      <p class="eyebrow">Your business, at a glance</p>
+      <h1 class="page-title">Vital signs dashboard</h1>
+      <p class="page-sub">The six numbers that tell you whether your business is healthy. Fill in the other tabs and this page fills itself in.</p>
+
+      <div class="vital-head"><span>Vital sign</span><span>Your number</span><span>Target</span><span>Status</span></div>
+      <div id="dashboardRows"></div>
+
+      <div class="score-banner">
+        <span class="label">Overall health score</span>
+        <span class="score" id="healthScore">0 of 6 in a healthy range</span>
+      </div>
+
+      <div class="card">
+        <h3>What to do next</h3>
+        <p class="hint">Start with anything marked critical or in caution. One fix at a time beats trying to fix everything at once.</p>
+        <div id="actionList"></div>
+      </div>
+    </section>
+
+    <!-- ============ CASH ============ -->
+    <section class="tab-panel" id="tab-cash">
+      <p class="eyebrow">Cash vital signs</p>
+      <h1 class="page-title">Days cash on hand &amp; quick ratio</h1>
+      <p class="page-sub">Can you cover what's coming due, and how long could you run if revenue stopped tomorrow?</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Days cash on hand</h3>
+          <p class="hint">How many days you could operate if all revenue stopped today.</p>
+          <div class="field-row"><label>Business checking balance</label><input type="number" data-key="cashChecking" value="0"></div>
+          <div class="field-row"><label>Business savings balance</label><input type="number" data-key="cashSavings" value="0"></div>
+          <div class="field-row"><label>Other liquid cash</label><input type="number" data-key="cashOther" value="0"></div>
+          <div class="field-row total"><label>Total cash on hand</label><input type="text" id="totalCash" disabled></div>
+
+          <p class="hint" style="margin-top:18px;">Average monthly operating expenses (last 3 months)</p>
+          <div class="field-row"><label>Month 1</label><input type="number" data-key="opex1" value="0"></div>
+          <div class="field-row"><label>Month 2</label><input type="number" data-key="opex2" value="0"></div>
+          <div class="field-row"><label>Month 3</label><input type="number" data-key="opex3" value="0"></div>
+          <div class="field-row total"><label>Average daily operating expense</label><input type="text" id="avgDailyOpex" disabled></div>
+
+          <div class="field-row readout"><label>Days cash on hand</label><span class="value" id="daysCashVal">0</span></div>
+          <div id="daysCashBadge"></div>
+          <p class="interp" id="daysCashInterp"></p>
+          <div class="action-line" id="daysCashAction"><i data-lucide="lightbulb"></i><span id="daysCashActionText"></span></div>
+        </div>
+
+        <div class="card">
+          <h3>Quick ratio</h3>
+          <p class="hint">Can you pay your immediate bills right now, without waiting on anything?</p>
+          <div class="field-row"><label>Accounts receivable (due in 30 days)</label><input type="number" data-key="quickAR" value="0"></div>
+          <p class="hint" style="margin-top:6px;">Cash from above is included automatically.</p>
+          <div class="field-row total"><label>Total quick assets</label><input type="text" id="totalQuickAssets" disabled></div>
+
+          <p class="hint" style="margin-top:18px;">Current liabilities (due in 30 days)</p>
+          <div class="field-row"><label>Rent due</label><input type="number" data-key="liabRent" value="0"></div>
+          <div class="field-row"><label>Payroll due</label><input type="number" data-key="liabPayroll" value="0"></div>
+          <div class="field-row"><label>Credit card payments due</label><input type="number" data-key="liabCC" value="0"></div>
+          <div class="field-row"><label>Loan payments due</label><input type="number" data-key="liabLoan" value="0"></div>
+          <div class="field-row"><label>Vendor bills due</label><input type="number" data-key="liabVendor" value="0"></div>
+          <div class="field-row"><label>Other bills due</label><input type="number" data-key="liabOther" value="0"></div>
+          <div class="field-row total"><label>Total current liabilities</label><input type="text" id="totalLiabilities" disabled></div>
+
+          <div class="field-row readout"><label>Quick ratio</label><span class="value" id="quickRatioVal">0</span></div>
+          <div id="quickRatioBadge"></div>
+          <p class="interp" id="quickRatioInterp"></p>
+          <div class="action-line"><i data-lucide="lightbulb"></i><span id="quickRatioActionText"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MARGIN ============ -->
+    <section class="tab-panel" id="tab-margin">
+      <p class="eyebrow">Growth vital signs</p>
+      <h1 class="page-title">Gross profit margin &amp; pricing</h1>
+      <p class="page-sub">How much of every revenue dollar you keep after the direct cost of doing the work.</p>
+
+      <div class="card">
+        <div class="field-row"><label>Business type</label>
+          <select data-key="bizType">
+            <option>Solo Practitioner</option>
+            <option>Team Practice</option>
+            <option>Group Practice</option>
+          </select>
+        </div>
+        <div class="field-row"><label>Total revenue (this month)</label><input type="number" data-key="mRevenue" value="0"></div>
+        <p class="hint" style="margin-top:14px;">Cost of goods sold (COGS)</p>
+        <div class="field-row"><label>Wages (if applicable)</label><input type="number" data-key="cogsWages" value="0"></div>
+        <div class="field-row"><label>Supplies / materials used</label><input type="number" data-key="cogsSupplies" value="0"></div>
+        <div class="field-row"><label>Payment processing fees</label><input type="number" data-key="cogsProcessing" value="0"></div>
+        <div class="field-row"><label>Service delivery software</label><input type="number" data-key="cogsSoftware" value="0"></div>
+        <div class="field-row"><label>Other direct costs</label><input type="number" data-key="cogsOther" value="0"></div>
+        <div class="field-row total"><label>Total COGS</label><input type="text" id="totalCogs" disabled></div>
+
+        <div class="field-row readout"><label>Gross profit</label><span class="value" id="grossProfitVal">$0</span></div>
+        <div class="field-row readout"><label>Gross profit margin</label><span class="value" id="marginVal">0%</span></div>
+        <div id="marginBadge"></div>
+        <p class="interp" id="marginInterp"></p>
+        <div class="action-line"><i data-lucide="lightbulb"></i><span id="marginActionText"></span></div>
+      </div>
+
+      <div class="card">
+        <h3>Backwards pricing calculator</h3>
+        <p class="hint">Work out what you should be charging, based on your costs and what you want to make.</p>
+        <div class="field-row"><label>Monthly operating expenses (fixed costs)</label><input type="number" data-key="bpOpex" value="0"></div>
+        <div class="field-row"><label>Desired monthly profit</label><input type="number" data-key="bpProfit" value="0"></div>
+        <div class="field-row total"><label>Gross profit needed</label><input type="text" id="bpProfitNeeded" disabled></div>
+        <div class="field-row"><label>Target gross margin %</label><input type="number" step="1" data-key="bpTargetMargin" value="75"></div>
+        <div class="field-row total"><label>Revenue needed</label><input type="text" id="bpRevenueNeeded" disabled></div>
+        <div class="field-row"><label>Client capacity (clients / month)</label><input type="number" data-key="bpCapacity" value="0"></div>
+        <div class="field-row readout"><label>Price per client needed</label><span class="value" id="bpPriceNeeded">$0</span></div>
+        <div class="field-row"><label>Your current price</label><input type="number" data-key="bpCurrentPrice" value="0"></div>
+        <p class="interp" id="bpGapAnalysis"></p>
+      </div>
+    </section>
+
+    <!-- ============ BREAK-EVEN ============ -->
+    <section class="tab-panel" id="tab-breakeven">
+      <p class="eyebrow">Growth vital signs</p>
+      <h1 class="page-title">Break-even revenue</h1>
+      <p class="page-sub">The minimum you need to bring in each month just to cover what you owe.</p>
+
+      <div class="card">
+        <h3>Fixed vs. variable cost categorizer</h3>
+        <p class="hint">Fixed costs happen whether or not you work. Variable costs move with how much you do.</p>
+        <table class="history" id="fvTable">
+          <thead><tr><th>Expense</th><th>Monthly amount</th><th>Type</th><th></th></tr></thead>
+          <tbody id="fvBody"></tbody>
+        </table>
+        <button class="btn small secondary" id="addExpenseBtn" style="margin-top:12px;">+ Add expense</button>
+        <div class="field-row total" style="margin-top:14px;"><label>Total fixed costs</label><input type="text" id="totalFixed" disabled></div>
+        <div class="field-row"><label>Total variable costs (for reference)</label><input type="text" id="totalVariable" disabled></div>
+      </div>
+
+      <div class="card">
+        <h3>Break-even calculator</h3>
+        <div class="field-row"><label>Total fixed costs</label><input type="text" id="beFixed" disabled></div>
+        <div class="field-row"><label>Gross profit margin (from Margin tab)</label><input type="text" id="beMargin" disabled></div>
+        <div class="field-row readout"><label>Break-even revenue</label><span class="value" id="beRevenueVal">$0</span></div>
+        <div class="field-row"><label>Average price per client</label><input type="number" data-key="beAvgPrice" value="0"></div>
+        <div class="field-row readout"><label>Break-even in # of clients</label><span class="value" id="beClientsVal">0</span></div>
+
+        <p class="hint" style="margin-top:18px;">Current vs. break-even</p>
+        <div class="field-row"><label>Current monthly revenue</label><input type="number" data-key="beCurrentRevenue" value="0"></div>
+        <div class="field-row readout"><label>Revenue above / (below) break-even</label><span class="value" id="beDiffVal">$0</span></div>
+        <div class="field-row readout"><label>Profit buffer %</label><span class="value" id="beBufferVal">0%</span></div>
+        <div id="beBadge"></div>
+        <div class="action-line"><i data-lucide="lightbulb"></i><span id="beActionText"></span></div>
+      </div>
+
+      <div class="card">
+        <h3>Break-even scenario planner</h3>
+        <p class="hint">See how reducing fixed costs or raising your margin would change your break-even point.</p>
+        <div class="grid-2">
+          <div>
+            <p class="hint"><strong>Scenario 1 — current state</strong></p>
+            <div class="field-row"><label>Fixed costs</label><input type="text" id="sc1Fixed" disabled></div>
+            <div class="field-row"><label>Margin</label><input type="text" id="sc1Margin" disabled></div>
+            <div class="field-row readout"><label>Break-even revenue</label><span class="value" id="sc1BE">$0</span></div>
+          </div>
+          <div>
+            <p class="hint"><strong>Scenario 2 — reduce fixed costs</strong></p>
+            <div class="field-row"><label>New fixed costs</label><input type="number" data-key="sc2Fixed" value="0"></div>
+            <div class="field-row readout"><label>New break-even revenue</label><span class="value" id="sc2BE">$0</span></div>
+            <p class="interp" id="sc2Diff"></p>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:8px;">
+          <div>
+            <p class="hint"><strong>Scenario 3 — increase margin</strong></p>
+            <div class="field-row"><label>New gross margin %</label><input type="number" step="1" data-key="sc3Margin" value="80"></div>
+            <div class="field-row readout"><label>New break-even revenue</label><span class="value" id="sc3BE">$0</span></div>
+            <p class="interp" id="sc3Diff"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MARKETING ============ -->
+    <section class="tab-panel" id="tab-marketing">
+      <p class="eyebrow">Marketing vital signs</p>
+      <h1 class="page-title">Acquisition &amp; retention</h1>
+      <p class="page-sub">What it costs you to win a client, what that client is worth, and how many you keep.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Customer acquisition cost (CAC)</h3>
+          <div class="field-row"><label>Paid advertising</label><input type="number" data-key="mktAds" value="0"></div>
+          <div class="field-row"><label>Marketing software / tools</label><input type="number" data-key="mktSoftware" value="0"></div>
+          <div class="field-row"><label>Marketing staff / contractors</label><input type="number" data-key="mktStaff" value="0"></div>
+          <div class="field-row"><label>Content creation costs</label><input type="number" data-key="mktContent" value="0"></div>
+          <div class="field-row"><label>Networking / events</label><input type="number" data-key="mktEvents" value="0"></div>
+          <div class="field-row"><label>Website costs</label><input type="number" data-key="mktWebsite" value="0"></div>
+          <div class="field-row"><label>Other marketing expenses</label><input type="number" data-key="mktOther" value="0"></div>
+          <div class="field-row total"><label>Total marketing costs</label><input type="text" id="totalMktCost" disabled></div>
+          <div class="field-row"><label>New clients acquired</label><input type="number" data-key="mktNewClients" value="0"></div>
+          <div class="field-row readout"><label>Your CAC</label><span class="value" id="cacVal">$0</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Customer lifetime value (LTV)</h3>
+          <div class="field-row"><label>Avg. revenue per client (monthly)</label><input type="number" data-key="ltvAvgRev" value="0"></div>
+          <div class="field-row"><label>Avg. length of relationship (months)</label><input type="number" data-key="ltvMonths" value="0"></div>
+          <div class="field-row readout"><label>Your LTV</label><span class="value" id="ltvVal">$0</span></div>
+
+          <p class="hint" style="margin-top:18px;">CAC : LTV ratio &amp; health check</p>
+          <div class="field-row readout"><label>CAC : LTV ratio</label><span class="value" id="cacLtvVal">0</span></div>
+          <div id="cacLtvBadge"></div>
+          <p class="interp" id="cacLtvInterp"></p>
+          <div class="action-line"><i data-lucide="lightbulb"></i><span id="cacLtvActionText"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Customer retention rate</h3>
+        <div class="grid-2">
+          <div>
+            <div class="field-row"><label>Clients at start of period</label><input type="number" data-key="retStart" value="0"></div>
+            <div class="field-row"><label>Clients at end of period</label><input type="number" data-key="retEnd" value="0"></div>
+            <div class="field-row"><label>New clients acquired during period</label><input type="number" data-key="retNew" value="0"></div>
+            <div class="field-row total"><label>Clients retained</label><input type="text" id="retRetained" disabled></div>
+          </div>
+          <div>
+            <div class="field-row readout"><label>Retention rate</label><span class="value" id="retRateVal">0%</span></div>
+            <div class="field-row readout"><label>Churn rate</label><span class="value" id="churnVal">0%</span></div>
+            <div id="retBadge"></div>
+            <p class="interp" id="retInterp"></p>
+            <div class="action-line"><i data-lucide="lightbulb"></i><span id="retActionText"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="tab-panel" id="tab-history">
+      <p class="eyebrow">Monthly tracker</p>
+      <h1 class="page-title">History</h1>
+      <p class="page-sub">Save a snapshot each month to see your vital signs move over time.</p>
+      <div class="card">
+        <div id="historyEmpty" class="empty-state">Nothing here yet. Fill in your numbers, then click "Save this month" in the sidebar — that's where the picture starts to come together.</div>
+        <table class="history" id="historyTable" style="display:none;">
+          <thead><tr><th>Month</th><th>Days cash</th><th>Quick ratio</th><th>Margin</th><th>Break-even</th><th>CAC</th><th>Retention</th><th></th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+lucide.createIcons();
+
+/* ---------------- State ---------------- */
+const DEFAULTS = {
+  bizName:'', bizMonth:'',
+  cashChecking:0, cashSavings:0, cashOther:0, opex1:0, opex2:0, opex3:0,
+  quickAR:0, liabRent:0, liabPayroll:0, liabCC:0, liabLoan:0, liabVendor:0, liabOther:0,
+  bizType:'Solo Practitioner', mRevenue:0,
+  cogsWages:0, cogsSupplies:0, cogsProcessing:0, cogsSoftware:0, cogsOther:0,
+  bpOpex:0, bpProfit:0, bpTargetMargin:75, bpCapacity:0, bpCurrentPrice:0,
+  beAvgPrice:0, beCurrentRevenue:0, sc2Fixed:0, sc3Margin:80,
+  mktAds:0, mktSoftware:0, mktStaff:0, mktContent:0, mktEvents:0, mktWebsite:0, mktOther:0, mktNewClients:0,
+  ltvAvgRev:0, ltvMonths:0,
+  retStart:0, retEnd:0, retNew:0,
+};
+const FIXED_VAR_DEFAULTS = [
+  ['Rent / Office Space',0,'Fixed'],['Insurance',0,'Fixed'],['Software Subscriptions',0,'Fixed'],
+  ['Marketing (Base)',0,'Fixed'],['Your Salary / Draw',0,'Fixed'],['Payroll (Salaried Staff)',0,'Fixed'],
+  ['Bookkeeping / Accounting',0,'Fixed'],['Supplies',0,'Variable'],['Payment Processing Fees',0,'Variable'],
+  ['Hourly Wages',0,'Variable'],
+];
+
+const STORAGE_KEY = 'sm_vital_signs_state_v1';
+const HISTORY_KEY = 'sm_vital_signs_history_v1';
+const FV_KEY = 'sm_vital_signs_fv_v1';
+
+let state = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'));
+let fvRows = JSON.parse(localStorage.getItem(FV_KEY) || 'null') || FIXED_VAR_DEFAULTS.map(r => ({name:r[0], amount:r[1], type:r[2]}));
+let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+
+function persist(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(FV_KEY, JSON.stringify(fvRows));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+/* ---------------- Helpers ---------------- */
+const money = n => '$' + (Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const pct = n => ((Number(n)||0)*100).toFixed(0) + '%';
+const num = n => (Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:1});
+
+function badgeHTML(tier, text){
+  const icons = {excellent:'check-circle', healthy:'circle-check', caution:'alert-triangle', critical:'alert-circle', neutral:'minus-circle'};
+  return `<span class="badge ${tier}"><i data-lucide="${icons[tier]}"></i>${text}</span>`;
+}
+
+/* ---------------- Calculations ---------------- */
+function calc(){
+  const s = state;
+  const out = {};
+
+  // ---- Cash ----
+  out.totalCash = (+s.cashChecking||0) + (+s.cashSavings||0) + (+s.cashOther||0);
+  const opexVals = [+s.opex1||0, +s.opex2||0, +s.opex3||0];
+  out.avgOpex = opexVals.reduce((a,b)=>a+b,0)/3;
+  out.avgDailyOpex = out.avgOpex/30;
+  out.daysCash = out.avgDailyOpex>0 ? out.totalCash/out.avgDailyOpex : 0;
+
+  out.totalQuickAssets = out.totalCash + (+s.quickAR||0);
+  out.totalLiabilities = ['liabRent','liabPayroll','liabCC','liabLoan','liabVendor','liabOther'].reduce((a,k)=>a+(+s[k]||0),0);
+  out.quickRatio = out.totalLiabilities>0 ? out.totalQuickAssets/out.totalLiabilities : 0;
+
+  if(out.daysCash<15){out.daysCashTier='critical';out.daysCashLabel='Critical';}
+  else if(out.daysCash<45){out.daysCashTier='caution';out.daysCashLabel='Caution';}
+  else if(out.daysCash<90){out.daysCashTier='healthy';out.daysCashLabel='Healthy';}
+  else {out.daysCashTier='excellent';out.daysCashLabel='Excellent';}
+
+  if(out.quickRatio<0.8){out.quickRatioTier='critical';out.quickRatioLabel='Urgent';}
+  else if(out.quickRatio<1.2){out.quickRatioTier='caution';out.quickRatioLabel='Tight';}
+  else if(out.quickRatio<=2){out.quickRatioTier='healthy';out.quickRatioLabel='Healthy';}
+  else {out.quickRatioTier='excellent';out.quickRatioLabel='Excellent';}
+
+  // ---- Margin ----
+  out.totalCogs = ['cogsWages','cogsSupplies','cogsProcessing','cogsSoftware','cogsOther'].reduce((a,k)=>a+(+s[k]||0),0);
+  out.grossProfit = (+s.mRevenue||0) - out.totalCogs;
+  out.margin = (+s.mRevenue||0) > 0 ? out.grossProfit/(+s.mRevenue) : 0;
+
+  const thresholds = {
+    'Solo Practitioner':[0.6,0.75,0.85],
+    'Team Practice':[0.4,0.55,0.7],
+    'Group Practice':[0.5,0.65,0.75],
+  };
+  const t = thresholds[s.bizType] || thresholds['Solo Practitioner'];
+  if(out.margin<t[0]){out.marginTier='critical';out.marginLabel='Low';}
+  else if(out.margin<t[1]){out.marginTier='caution';out.marginLabel='Okay';}
+  else if(out.margin<t[2]){out.marginTier='healthy';out.marginLabel='Healthy';}
+  else {out.marginTier='excellent';out.marginLabel='Excellent';}
+
+  // backwards pricing
+  out.bpProfitNeeded = (+s.bpOpex||0) + (+s.bpProfit||0);
+  const targetMarginFrac = (+s.bpTargetMargin||0)/100;
+  out.bpRevenueNeeded = targetMarginFrac>0 ? out.bpProfitNeeded/targetMarginFrac : 0;
+  out.bpPriceNeeded = (+s.bpCapacity||0)>0 ? out.bpRevenueNeeded/(+s.bpCapacity) : 0;
+
+  // ---- Break-even ----
+  out.totalFixed = fvRows.filter(r=>r.type==='Fixed').reduce((a,r)=>a+(+r.amount||0),0);
+  out.totalVariable = fvRows.filter(r=>r.type==='Variable').reduce((a,r)=>a+(+r.amount||0),0);
+  out.beRevenue = out.margin>0 ? out.totalFixed/out.margin : 0;
+  out.beClients = (+s.beAvgPrice||0)>0 ? Math.ceil(out.beRevenue/(+s.beAvgPrice)) : 0;
+  out.beDiff = (+s.beCurrentRevenue||0) - out.beRevenue;
+  out.beBuffer = (+s.beCurrentRevenue||0)>0 ? out.beDiff/(+s.beCurrentRevenue) : 0;
+
+  if((+s.beCurrentRevenue||0)===0){out.beTier='neutral';out.beLabel='Enter revenue';}
+  else if(out.beDiff<0){out.beTier='critical';out.beLabel='Losing money';}
+  else if(out.beBuffer<0.25){out.beTier='caution';out.beLabel='Barely profitable';}
+  else if(out.beBuffer<0.5){out.beTier='healthy';out.beLabel='Healthy';}
+  else {out.beTier='excellent';out.beLabel='Excellent';}
+
+  out.sc1BE = out.beRevenue;
+  out.sc2BE = (+s.sc2Fixed||0)>0 && out.margin>0 ? (+s.sc2Fixed)/out.margin : 0;
+  const sc3MarginFrac = (+s.sc3Margin||0)/100;
+  out.sc3BE = sc3MarginFrac>0 ? out.totalFixed/sc3MarginFrac : 0;
+
+  // ---- Marketing ----
+  out.totalMktCost = ['mktAds','mktSoftware','mktStaff','mktContent','mktEvents','mktWebsite','mktOther'].reduce((a,k)=>a+(+s[k]||0),0);
+  out.cac = (+s.mktNewClients||0)>0 ? out.totalMktCost/(+s.mktNewClients) : 0;
+  out.ltv = (+s.ltvAvgRev||0) * (+s.ltvMonths||0);
+  out.cacLtvRatio = out.ltv>0 ? out.cac/out.ltv : 0;
+
+  if(out.ltv===0 && out.cac===0){out.cacLtvTier='neutral';out.cacLtvLabel='Enter data';}
+  else if(out.cacLtvRatio>0.5){out.cacLtvTier='critical';out.cacLtvLabel='Too high';}
+  else if(out.cacLtvRatio>0.33){out.cacLtvTier='caution';out.cacLtvLabel='Tight';}
+  else if(out.cacLtvRatio>0.2){out.cacLtvTier='healthy';out.cacLtvLabel='Healthy';}
+  else {out.cacLtvTier='excellent';out.cacLtvLabel='Excellent';}
+
+  out.retRetained = (+s.retEnd||0) - (+s.retNew||0);
+  out.retRate = (+s.retStart||0)>0 ? out.retRetained/(+s.retStart) : 0;
+  out.churnRate = 1 - out.retRate;
+
+  if((+s.retStart||0)===0){out.retTier='neutral';out.retLabel='Enter data';}
+  else if(out.retRate<0.6){out.retTier='critical';out.retLabel='High churn';}
+  else if(out.retRate<0.75){out.retTier='caution';out.retLabel='Needs work';}
+  else if(out.retRate<0.9){out.retTier='healthy';out.retLabel='Strong';}
+  else {out.retTier='excellent';out.retLabel='Excellent';}
+
+  return out;
+}
+
+/* ---------------- Render ---------------- */
+function setVal(id, html){ const el = document.getElementById(id); if(el) el.innerHTML = html; }
+function setText(id, text){ const el = document.getElementById(id); if(el){ if('value' in el) el.value = text; else el.textContent = text; } }
+
+function render(){
+  const c = calc();
+
+  // Cash tab
+  setText('totalCash', money(c.totalCash));
+  setText('avgDailyOpex', money(c.avgDailyOpex.toFixed(2)));
+  setText('totalQuickAssets', money(c.totalQuickAssets));
+  setText('totalLiabilities', money(c.totalLiabilities));
+  setText('daysCashVal', Math.round(c.daysCash));
+  setVal('daysCashBadge', badgeHTML(c.daysCashTier, c.daysCashLabel));
+  document.getElementById('daysCashInterp').textContent = c.avgDailyOpex>0 ?
+    `At this rate you could run about ${Math.round(c.daysCash)} days on cash alone.` : 'Enter your numbers above to see your result.';
+  document.getElementById('daysCashActionText').textContent = {
+    critical:'Build cash reserves immediately. Cut discretionary spending and follow up on anything owed to you.',
+    caution:'Set aside about 15% of revenue each month until you reach 45 days.',
+    healthy:'Keep building. Maintain the habit and let the reserve grow.',
+    excellent:'Strong position. Worth thinking about how to put the extra cash to work.'
+  }[c.daysCashTier];
+
+  setText('quickRatioVal', num(c.quickRatio));
+  setVal('quickRatioBadge', badgeHTML(c.quickRatioTier, c.quickRatioLabel));
+  document.getElementById('quickRatioInterp').textContent = c.totalLiabilities>0 ?
+    `For every $1 you owe in the next 30 days, you have $${num(c.quickRatio)} in liquid assets.` : 'Enter your numbers above to see your result.';
+  document.getElementById('quickRatioActionText').textContent = {
+    critical:'You cannot cover what is coming due. Negotiate terms and speed up collections.',
+    caution:'Little margin for error. Invoice faster and follow up on anything late.',
+    healthy:'You can comfortably cover your obligations.',
+    excellent:'Very strong liquidity position.'
+  }[c.quickRatioTier];
+
+  // Margin tab
+  setText('totalCogs', money(c.totalCogs));
+  setText('grossProfitVal', money(c.grossProfit));
+  setText('marginVal', pct(c.margin));
+  setVal('marginBadge', badgeHTML(c.marginTier, c.marginLabel));
+  document.getElementById('marginInterp').textContent = (+state.mRevenue||0)>0 ?
+    `You keep about $${c.margin.toFixed(2)} of every revenue dollar after direct costs.` : 'Enter revenue and costs above to see your result.';
+  document.getElementById('marginActionText').textContent = {
+    critical:'Margins are unsustainable at this level. Raise prices, reduce direct costs, or change your service mix.',
+    caution:'Margins need improvement. Review pricing and where costs can be trimmed.',
+    healthy:'Healthy margins. Maintain the discipline that got you here.',
+    excellent:'Excellent margins. This is a strong foundation to build on.'
+  }[c.marginTier];
+
+  setText('bpProfitNeeded', money(c.bpProfitNeeded));
+  setText('bpRevenueNeeded', money(c.bpRevenueNeeded));
+  setText('bpPriceNeeded', money(c.bpPriceNeeded.toFixed(0)));
+  const curPrice = +state.bpCurrentPrice||0;
+  if(curPrice>0 && c.bpPriceNeeded>0){
+    if(c.bpPriceNeeded>curPrice){
+      const raise = ((c.bpPriceNeeded-curPrice)/curPrice*100).toFixed(0);
+      document.getElementById('bpGapAnalysis').textContent = `Increase by ${money(c.bpPriceNeeded-curPrice)} (about a ${raise}% raise) to hit your target.`;
+    } else {
+      document.getElementById('bpGapAnalysis').textContent = `You're on target — your current price already covers what you need.`;
+    }
+  } else {
+    document.getElementById('bpGapAnalysis').textContent = 'Enter your current price to see the gap.';
+  }
+
+  // Break-even tab
+  setText('totalFixed', money(c.totalFixed));
+  setText('totalVariable', money(c.totalVariable));
+  setText('beFixed', money(c.totalFixed));
+  setText('beMargin', pct(c.margin));
+  setText('beRevenueVal', money(c.beRevenue.toFixed(0)));
+  setText('beClientsVal', c.beClients);
+  setText('beDiffVal', money(c.beDiff.toFixed(0)));
+  setText('beBufferVal', pct(c.beBuffer));
+  setVal('beBadge', badgeHTML(c.beTier, c.beLabel));
+  document.getElementById('beActionText').textContent = {
+    neutral:'Enter your current monthly revenue above to see where you stand.',
+    critical:'You are losing money monthly at this revenue level. Reduce fixed costs or increase revenue.',
+    caution:'Barely profitable. Build more margin before taking on growth spending.',
+    healthy:'Healthy profit buffer above break-even.',
+    excellent:'Excellent buffer above break-even.'
+  }[c.beTier];
+
+  setText('sc1Fixed', money(c.totalFixed));
+  setText('sc1Margin', pct(c.margin));
+  setText('sc1BE', money(c.sc1BE.toFixed(0)));
+  setText('sc2BE', money(c.sc2BE.toFixed(0)));
+  document.getElementById('sc2Diff').textContent = (+state.sc2Fixed||0)>0 ?
+    `${money(Math.max(0,c.sc1BE-c.sc2BE).toFixed(0))} lower than today.` : 'Enter a new fixed cost figure to compare.';
+  setText('sc3BE', money(c.sc3BE.toFixed(0)));
+  document.getElementById('sc3Diff').textContent = (+state.sc3Margin||0)>0 ?
+    `${money(Math.max(0,c.sc1BE-c.sc3BE).toFixed(0))} lower than today.` : 'Enter a target margin to compare.';
+
+  // Marketing tab
+  setText('totalMktCost', money(c.totalMktCost));
+  setText('cacVal', money(c.cac.toFixed(0)));
+  setText('ltvVal', money(c.ltv.toFixed(0)));
+  setText('cacLtvVal', num(c.cacLtvRatio));
+  setVal('cacLtvBadge', badgeHTML(c.cacLtvTier, c.cacLtvLabel));
+  document.getElementById('cacLtvInterp').textContent = (c.cac>0||c.ltv>0) ?
+    `You spend about ${money(c.cac.toFixed(0))} to acquire a client worth about ${money(c.ltv.toFixed(0))}.` : 'Enter your numbers above to see your result.';
+  document.getElementById('cacLtvActionText').textContent = {
+    neutral:'Enter your marketing costs, new clients, and LTV inputs above.',
+    critical:'Unsustainable. Work on lowering acquisition cost or raising client value.',
+    caution:'Tight margins. Reduce CAC or increase the value of each client.',
+    healthy:'Healthy acquisition economics.',
+    excellent:'Excellent acquisition economics.'
+  }[c.cacLtvTier];
+
+  setText('retRetained', c.retRetained);
+  setText('retRateVal', pct(c.retRate));
+  setText('churnVal', pct(c.churnRate));
+  setVal('retBadge', badgeHTML(c.retTier, c.retLabel));
+  document.getElementById('retInterp').textContent = (+state.retStart||0)>0 ?
+    `You retained ${c.retRetained} out of ${state.retStart} clients.` : 'Enter your numbers above to see your result.';
+  document.getElementById('retActionText').textContent = {
+    neutral:'Enter clients at start and end of the period above.',
+    critical:'High churn. Talk to clients who left and look at your onboarding.',
+    caution:'Retention needs work. Focus on the client experience.',
+    healthy:'Strong retention. Keep it up.',
+    excellent:'Excellent retention.'
+  }[c.retTier];
+
+  // Dashboard
+  const vitals = [
+    {name:'Days cash on hand', value:Math.round(c.daysCash), target:'45–90 days', tier:c.daysCashTier, label:c.daysCashLabel},
+    {name:'Quick ratio', value:num(c.quickRatio), target:'1.2 – 2.0', tier:c.quickRatioTier, label:c.quickRatioLabel},
+    {name:'Gross profit margin', value:pct(c.margin), target:'70%+ solo / 50%+ team', tier:c.marginTier, label:c.marginLabel},
+    {name:'Break-even revenue', value:money(c.beRevenue.toFixed(0)), target:'Below current revenue', tier:c.beTier, label:c.beLabel},
+    {name:'Customer acquisition cost', value:money(c.cac.toFixed(0)), target:'< 33% of LTV', tier:c.cacLtvTier, label:c.cacLtvLabel},
+    {name:'Customer retention rate', value:pct(c.retRate), target:'80%+ monthly', tier:c.retTier, label:c.retLabel},
+  ];
+  document.getElementById('dashboardRows').innerHTML = vitals.map(v => `
+    <div class="vital-row">
+      <span class="name">${v.name}</span>
+      <span class="num">${v.value}</span>
+      <span class="target">${v.target}</span>
+      ${badgeHTML(v.tier, v.label)}
+    </div>`).join('');
+
+  const healthyCount = vitals.filter(v=>v.tier==='healthy'||v.tier==='excellent').length;
+  document.getElementById('healthScore').textContent = `${healthyCount} of 6 in a healthy range`;
+
+  const needsWork = vitals.filter(v=>v.tier==='critical'||v.tier==='caution');
+  document.getElementById('actionList').innerHTML = needsWork.length ? needsWork.map(v=>`
+    <div class="action-line"><i data-lucide="alert-triangle"></i><span><strong>${v.name}:</strong> currently ${v.label.toLowerCase()}. Check the ${v.name.toLowerCase().includes('cash')||v.name.toLowerCase().includes('quick')?'Cash':v.name.toLowerCase().includes('margin')||v.name.toLowerCase().includes('break')?'Margin / Break-even':'Marketing'} tab.</span></div>`
+  ).join('') : `<div class="action-line"><i data-lucide="check-circle"></i><span>Nothing urgent right now. Keep an eye on your numbers month to month.</span></div>`;
+
+  // Fixed/variable table
+  document.getElementById('fvBody').innerHTML = fvRows.map((r,i) => `
+    <tr>
+      <td><input type="text" data-fv="${i}" data-field="name" value="${r.name}" style="width:100%;border:0;background:none;font-family:var(--font-body);"></td>
+      <td><input type="number" data-fv="${i}" data-field="amount" value="${r.amount}" style="width:100px;border:1px solid var(--border-soft);border-radius:6px;padding:5px 8px;"></td>
+      <td>
+        <select data-fv="${i}" data-field="type" style="border:1px solid var(--border-soft);border-radius:6px;padding:5px 8px;">
+          <option ${r.type==='Fixed'?'selected':''}>Fixed</option>
+          <option ${r.type==='Variable'?'selected':''}>Variable</option>
+        </select>
+      </td>
+      <td><button data-remove-fv="${i}" class="btn small secondary">Remove</button></td>
+    </tr>`).join('');
+
+  // History table
+  if(history.length===0){
+    document.getElementById('historyEmpty').style.display='block';
+    document.getElementById('historyTable').style.display='none';
+  } else {
+    document.getElementById('historyEmpty').style.display='none';
+    document.getElementById('historyTable').style.display='table';
+    document.getElementById('historyBody').innerHTML = history.map((h,i)=>`
+      <tr>
+        <td>${h.month || '—'}</td>
+        <td>${Math.round(h.daysCash)}</td>
+        <td>${num(h.quickRatio)}</td>
+        <td>${pct(h.margin)}</td>
+        <td>${money(h.beRevenue.toFixed(0))}</td>
+        <td>${money(h.cac.toFixed(0))}</td>
+        <td>${pct(h.retRate)}</td>
+        <td><button data-remove-history="${i}" class="btn small secondary">Remove</button></td>
+      </tr>`).join('');
+  }
+
+  lucide.createIcons();
+}
+
+/* ---------------- Wiring ---------------- */
+document.getElementById('bizName').value = state.bizName;
+document.getElementById('bizMonth').value = state.bizMonth;
+document.getElementById('bizName').addEventListener('input', e => { state.bizName = e.target.value; persist(); });
+document.getElementById('bizMonth').addEventListener('input', e => { state.bizMonth = e.target.value; persist(); render(); });
+
+document.querySelectorAll('[data-key]').forEach(el => {
+  const key = el.dataset.key;
+  if(el.tagName === 'SELECT'){ el.value = state[key]; }
+  else { el.value = state[key]; }
+  el.addEventListener('input', () => { state[key] = el.tagName==='SELECT' ? el.value : el.value; persist(); render(); });
+});
+
+document.getElementById('fvBody').addEventListener('input', e => {
+  const idx = e.target.dataset.fv, field = e.target.dataset.field;
+  if(idx===undefined) return;
+  fvRows[idx][field] = field==='amount' ? (+e.target.value||0) : e.target.value;
+  persist(); render();
+});
+document.getElementById('fvBody').addEventListener('click', e => {
+  if(e.target.dataset.removeFv !== undefined){
+    fvRows.splice(+e.target.dataset.removeFv,1); persist(); render();
+  }
+});
+document.getElementById('addExpenseBtn').addEventListener('click', () => {
+  fvRows.push({name:'[Add expense]', amount:0, type:'Fixed'}); persist(); render();
+});
+
+document.getElementById('historyBody').addEventListener('click', e => {
+  if(e.target.dataset.removeHistory !== undefined){
+    history.splice(+e.target.dataset.removeHistory,1); persist(); render();
+  }
+});
+
+document.getElementById('saveMonthBtn').addEventListener('click', () => {
+  const c = calc();
+  history.unshift({
+    month: state.bizMonth || new Date().toISOString().slice(0,7),
+    daysCash:c.daysCash, quickRatio:c.quickRatio, margin:c.margin, beRevenue:c.beRevenue, cac:c.cac, retRate:c.retRate
+  });
+  persist(); render();
+  document.querySelector('[data-tab="history"]').click();
+});
+
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+document.getElementById('navList').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+});
+
+render();
+</script>
+</body>
+</html>
