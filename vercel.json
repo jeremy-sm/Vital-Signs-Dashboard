@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://www.mysuccessmetrics.com/dashboard",
+      "permanent": true
+    }
+  ]
+}
